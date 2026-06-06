@@ -454,25 +454,83 @@ const InquiryTracker = {
     },
 
     getRankedFeaturedItems() {
-        // Start with the curated featuredCarousel from site config
-        const featured = window.SITE_CONFIG?.home?.featuredCarousel || [];
+        // Top 3 most inquired items per category, based on user interactions.
+        const services = [
+            { key: 'graphics', name: 'Graphics Design', items: window.SITE_CONFIG?.graphics?.portfolio || [] },
+            { key: 'photography', name: 'Photography', items: window.SITE_CONFIG?.photography?.portfolio || [] },
+            { key: 'clothing', name: 'Clothing', items: window.SITE_CONFIG?.clothing?.products || [] }
+        ];
 
-        // Get inquiry data
-        const data = this.getData();
+        // If there are no inquiry records yet, return deterministic defaults (first 3 per category)
+        const rawData = this.getData();
+        const hasAnyInquiries = services.some(s => rawData?.[s.key] && Object.keys(rawData[s.key]).length > 0);
 
-        // Score each featured item by its inquiry count
-        const scored = featured.map(item => {
-            const serviceData = data[item.category] || {};
-            // Sum inquiries for this service (featured items don't have IDs, so we use service-level count)
-            const serviceTotal = Object.values(serviceData).reduce((sum, i) => sum + (i.count || 0), 0);
-            return { ...item, inquiryCount: serviceTotal };
+        const buildFallback = (service) => {
+            const items = service.items || [];
+            return items.slice(0, 3).map((it, idx) => ({
+                id: `${service.key}-${it.id}-${idx}`,
+                title: it.title,
+                description: it.description || '',
+                price: typeof it.price === 'number' ? `$${it.price}` : (it.price || ''),
+                image: it.image,
+                category: service.key,
+                categoryName: service.name,
+                itemId: it.id,
+                anchorId: `${service.key}-item-${it.id}`
+            }));
+        };
+
+        if (!hasAnyInquiries) {
+            return services.flatMap(buildFallback);
+        }
+
+        const result = [];
+        services.forEach(service => {
+            // Use ranked IDs, then map to full objects from config
+            const top = this.getTopItems(service.key, 3);
+            const byId = new Map((service.items || []).map(i => [i.id, i]));
+
+            // If for some reason there are missing IDs, fallback-fill from config to keep 3 items.
+            const filled = [];
+            top.forEach(t => {
+                const item = byId.get(t.id);
+                if (item) {
+                    filled.push({
+                        id: `${service.key}-${item.id}`,
+                        title: item.title,
+                        description: item.description || '',
+                        price: typeof item.price === 'number' ? `$${item.price}` : (item.price || ''),
+                        image: item.image,
+                        category: service.key,
+                        categoryName: service.name,
+                        itemId: item.id,
+                        anchorId: `${service.key}-item-${item.id}`
+                    });
+                }
+            });
+
+            const usedIds = new Set(filled.map(f => f.itemId));
+            const remaining = (service.items || []).filter(i => !usedIds.has(i.id));
+            remaining.slice(0, Math.max(0, 3 - filled.length)).forEach((item, idx) => {
+                filled.push({
+                    id: `${service.key}-${item.id}-fb-${idx}`,
+                    title: item.title,
+                    description: item.description || '',
+                    price: typeof item.price === 'number' ? `$${item.price}` : (item.price || ''),
+                    image: item.image,
+                    category: service.key,
+                    categoryName: service.name,
+                    itemId: item.id,
+                    anchorId: `${service.key}-item-${item.id}`
+                });
+            });
+
+            result.push(...filled.slice(0, 3));
         });
 
-        // Sort by inquiry count descending, but keep curated order when no data
-        scored.sort((a, b) => b.inquiryCount - a.inquiryCount);
-
-        return scored;
+        return result;
     },
+
 
     clear() {
         localStorage.removeItem(this.STORAGE_KEY);

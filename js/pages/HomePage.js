@@ -36,7 +36,7 @@ const HomePage = {
                 <div class="hero-stats">
                     ${config.about.stats.map(stat => `
                         <div class="stat-item">
-                            <h3 class="counter" data-target="${stat.number}">0</h3>
+                            <h3 class="counter" data-target="${stat.number}">0<span>${stat.suffix}</span></h3>
                             <p>${stat.label}</p>
                         </div>
                     `).join('')}
@@ -61,19 +61,19 @@ const HomePage = {
                 </div>
                 <div class="services-grid">
                     <div class="service-card" data-page="graphics">
-                        <div class="service-icon">🎨</div>
+                        <div class="service-icon"></div>
                         <h3>Graphics Design</h3>
                         <p>Brand identities, logos, packaging, and digital assets</p>
                         <span class="service-link">Explore →</span>
                     </div>
                     <div class="service-card" data-page="photography">
-                        <div class="service-icon">📸</div>
+                        <div class="service-icon"></div>
                         <h3>Photography</h3>
                         <p>Portraits, events, products, and wedding photography</p>
                         <span class="service-link">Explore →</span>
                     </div>
                     <div class="service-card" data-page="clothing">
-                        <div class="service-icon">👕</div>
+                        <div class="service-icon"></div>
                         <h3>Clothing & Merch</h3>
                         <p>Custom apparel, hoodies, t-shirts, and corporate wear</p>
                         <span class="service-link">Explore →</span>

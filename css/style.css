@@ -555,6 +555,41 @@ section {
     z-index: var(--z-elevate);
 }
 
+/* Mobile Navigation (hidden by default; toggled via .active in Header.js) */
+.nav-links {
+    /* desktop default is flex; mobile override will change layout */
+}
+
+/* Ensure the active state is only visual on mobile */
+.nav-links.active {
+    display: flex;
+}
+
+/* Hide nav + show hamburger on small screens */
+@media (max-width: 768px) {
+    .mobile-menu-btn {
+        display: block;
+    }
+
+    .nav-links {
+        display: none;
+        position: absolute;
+        top: calc(var(--header-height, 80px));
+        left: 0;
+        right: 0;
+        padding: 16px var(--container-padding);
+        flex-direction: column;
+        gap: 16px;
+        background: rgba(10, 10, 10, 0.98);
+        border-bottom: 1px solid var(--white-5);
+        z-index: calc(var(--z-header) + 1);
+    }
+
+    .nav-links.active {
+        display: flex;
+    }
+}
+
 .mobile-menu-btn span {
     display: block;
     width: 100%;

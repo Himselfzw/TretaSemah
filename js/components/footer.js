@@ -13,7 +13,9 @@ class FooterComponent extends HTMLElement {
             <footer class="footer">
                 <div class="footer-content">
                     <div class="footer-column">
+                       <div class="logo" data-page="home">
                         <img src="assets/TS LOGO.png" alt="TS Brands Zim Logo" class="logo-img">TS<span>BRANDS</span>ZIM
+                    </div>
                         <p style="color: var(--gray); margin-top: var(--spacing-md);">Design. Capture. Wear.<br>Creative agency based in Zimbabwe.</p>
                         <div class="social-links" style="margin-top: var(--spacing-lg);">
                             <a href="${config.site.instagram}" target="_blank" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
@@ -32,16 +34,7 @@ class FooterComponent extends HTMLElement {
                             <li><a data-page="about">About</a></li>
                         </ul>
                     </div>
-                    <div class="footer-column">
-                        <h4>Services</h4>
-                        <ul class="footer-links">
-                            <li><a data-page="graphics">Brand Identity</a></li>
-                            <li><a data-page="photography">Photography</a></li>
-                            <li><a data-page="clothing">Custom Apparel</a></li>
-                            <li><a data-page="graphics">UI/UX Design</a></li>
-                            <li><a data-page="photography">Video Production</a></li>
-                        </ul>
-                    </div>
+                    
                     <div class="footer-column">
                         <h4>Contact Info</h4>
                         <ul class="footer-links">

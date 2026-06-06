@@ -15,8 +15,16 @@ class FeaturedCarousel extends HTMLElement {
     }
 
     getFeaturedItems() {
-        return window.SITE_CONFIG?.home?.featuredCarousel || [];
+        // Prefer dynamic ranking (top 3 items per category) based on inquiries/clicks.
+        if (window.InquiryTracker && typeof window.InquiryTracker.getRankedFeaturedItems === 'function') {
+            const ranked = window.InquiryTracker.getRankedFeaturedItems();
+            if (Array.isArray(ranked) && ranked.length) return ranked;
+        }
+
+        // Fallback: keep working even if ranking isn't ready.
+        return (window.SITE_CONFIG?.home?.featuredCarousel || []).slice(0, 9);
     }
+
 
     getCategoryColor(category) {
         const colors = {
@@ -31,9 +39,6 @@ class FeaturedCarousel extends HTMLElement {
         const items = this.getFeaturedItems();
         this.innerHTML = `
             <div class="carousel-container">
-                <button class="carousel-btn carousel-prev" aria-label="Previous">
-                    <i class="fas fa-chevron-left"></i>
-                </button>
                 <div class="carousel-track" role="list">
                     ${items.map((item, index) => `
                         <div class="carousel-slide" role="listitem" data-index="${index}">
@@ -47,17 +52,12 @@ class FeaturedCarousel extends HTMLElement {
                                     <p>${item.description}</p>
                                     <div class="price">${item.price}</div>
                                     <button class="btn-view-item" data-category="${item.category}" data-anchor="${item.anchorId}">
-                                        View Details <i class="fas fa-arrow-right"></i>
                                     </button>
                                 </div>
                             </div>
                         </div>
                     `).join('')}
                 </div>
-                <button class="carousel-btn carousel-next" aria-label="Next">
-                    <i class="fas fa-chevron-right"></i>
-                </button>
-                <div class="carousel-dots"></div>
             </div>
         `;
     }
@@ -65,9 +65,6 @@ class FeaturedCarousel extends HTMLElement {
     initCarousel() {
         this.track = this.querySelector('.carousel-track');
         this.slides = this.querySelectorAll('.carousel-slide');
-        this.prevBtn = this.querySelector('.carousel-prev');
-        this.nextBtn = this.querySelector('.carousel-next');
-        this.dotsContainer = this.querySelector('.carousel-dots');
         this.container = this.querySelector('.carousel-container');
         this.currentIndex = 0;
         this.slidesPerView = 1;
@@ -75,33 +72,11 @@ class FeaturedCarousel extends HTMLElement {
         if (this.slides.length === 0) return;
 
         this.updateSlidesPerView();
-        this.renderDots();
         this.updateCarousel();
         this.startAutoSpin();
     }
 
     attachEventListeners() {
-        // Navigation buttons
-        this.prevBtn?.addEventListener('click', () => {
-            this.stopAutoSpin();
-            this.goToPrev();
-            this.startAutoSpin();
-        });
-        this.nextBtn?.addEventListener('click', () => {
-            this.stopAutoSpin();
-            this.goToNext();
-            this.startAutoSpin();
-        });
-
-        // Dot navigation
-        this.dotsContainer?.addEventListener('click', (e) => {
-            if (e.target.dataset.dot !== undefined) {
-                this.stopAutoSpin();
-                this.goToIndex(parseInt(e.target.dataset.dot));
-                this.startAutoSpin();
-            }
-        });
-
         // Pause on hover, resume on leave
         if (this.container) {
             this.container.addEventListener('mouseenter', () => this.stopAutoSpin());
@@ -125,8 +100,27 @@ class FeaturedCarousel extends HTMLElement {
         }, { passive: true });
 
         // Card click - navigate to page and scroll to item
+        // Also supports 15s pause when clicking the middle of the picture.
         this.querySelectorAll('.featured-card').forEach(card => {
             card.addEventListener('click', (e) => {
+                // If user clicked the image area near the middle, pause for 15s.
+                // We treat “middle” as the central box (40%..60% both axes).
+                const img = e.target && e.target.tagName === 'IMG' ? e.target : card.querySelector('img');
+                if (img) {
+                    const rect = img.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    const inMiddle = (x >= rect.width * 0.4 && x <= rect.width * 0.6 && y >= rect.height * 0.4 && y <= rect.height * 0.6);
+                    if (inMiddle) {
+                        this.stopAutoSpin();
+                        this._centerPauseTimer && clearTimeout(this._centerPauseTimer);
+                        this._centerPauseTimer = setTimeout(() => {
+                            this.startAutoSpin();
+                        }, 15000);
+                        return; // avoid navigation on center-click
+                    }
+                }
+
                 e.preventDefault();
                 const category = card.dataset.category;
                 const anchorId = card.dataset.anchor;
@@ -138,26 +132,18 @@ class FeaturedCarousel extends HTMLElement {
         });
     }
 
+
     getMaxIndex() {
         return Math.max(0, this.slides.length - this.slidesPerView);
     }
 
-    renderDots() {
-        const maxIndex = this.getMaxIndex();
-        const numDots = maxIndex + 1;
-        this.dotsContainer.innerHTML = Array.from({ length: numDots }, (_, i) =>
-            `<button class="carousel-dot ${i === 0 ? 'active' : ''}" data-dot="${i}" aria-label="Go to slide ${i + 1}"></button>`
-        ).join('');
-        this.dots = this.querySelectorAll('.carousel-dot');
-    }
+    // Dots navigation removed (intentionally no-op).
 
     updateSlidesPerView() {
         const width = window.innerWidth;
         if (width > 1024) this.slidesPerView = 3;
         else if (width > 640) this.slidesPerView = 2;
         else this.slidesPerView = 1;
-        // Re-render dots since maxIndex changed
-        this.renderDots();
         this.updateCarousel();
     }
 
@@ -169,24 +155,25 @@ class FeaturedCarousel extends HTMLElement {
 
         const slideWidthPct = 100 / this.slidesPerView;
         this.track.style.transform = `translateX(-${this.currentIndex * slideWidthPct}%)`;
-
-        this.dots?.forEach((dot, i) => {
-            dot.classList.toggle('active', i === this.currentIndex);
-        });
-
-        if (this.prevBtn) this.prevBtn.disabled = this.currentIndex === 0;
-        if (this.nextBtn) this.nextBtn.disabled = this.currentIndex >= maxIndex;
     }
 
     goToNext() {
         const maxIndex = this.getMaxIndex();
+
+        // Move right at edges (wrap to start) and hide buttons accordingly.
         if (this.currentIndex < maxIndex) {
             this.currentIndex++;
         } else {
             this.currentIndex = 0;
         }
+
         this.updateCarousel();
+
+        // Clear any pending center-click pause timer.
+        this._centerPauseTimer && clearTimeout(this._centerPauseTimer);
+        this._centerPauseTimer = null;
     }
+
 
     goToPrev() {
         const maxIndex = this.getMaxIndex();

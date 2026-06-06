@@ -10,8 +10,7 @@ const GraphicsPage = {
             <div class="catalogue-page">
                 <div class="catalogue-hero" style="background-image: linear-gradient(135deg, #0A0A0A, #1A1A1A), url('${config.heroImage}'); background-blend-mode: overlay; background-size: contain;">
                     <div class="catalogue-hero-content">
-                        
-                        
+                        <span class="hero-icon"><span class="hero-icon"><img src="assets/TS LOGO.png" alt="TS Brands Zim Logo" class="logo-img1"></span></span>
                         <p>${config.tagline}</p>
                     </div>
                 </div>

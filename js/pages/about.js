@@ -9,10 +9,11 @@ const AboutPage = {
         return `
             <div class="about-page">
                 <div class="catalogue-hero">
+                
                     <div class="catalogue-hero-content">
                         <span class="hero-icon"><img src="assets/TS LOGO.png" alt="TS Brands Zim Logo" class="logo-img1"></span>
-                        <h1>About Ts Brands Zim</h1>
-                        <p>Creative agency based in Harare, Zimbabwe</p>
+                        <h1>About Ts BrandsZim</h1>
+                        <p>The Prospects</p>
                     </div>
                 </div>
                 
@@ -63,32 +64,7 @@ const AboutPage = {
                         `).join('')}
                     </div>
                 </section>
-                
-                <section class="team-section">
-                    <div class="section-header">
-                        <div class="subtitle">Meet the Team</div>
-                        <h2>The Creative Minds Behind the Magic</h2>
-                    </div>
-                    <div class="team-grid">
-                        ${config.team.map(member => `
-                            <div class="team-card">
-                                <div class="team-image">
-                                    <img src="${member.image}" alt="${member.name}" loading="lazy">
-                                    <div class="team-social">
-                                        <a href="${window.SITE_CONFIG.site.instagram}" target="_blank" rel="noopener"><i class="fab fa-instagram"></i></a>
-                                        <a href="https://linkedin.com" target="_blank" rel="noopener"><i class="fab fa-linkedin-in"></i></a>
-                                    </div>
-                                </div>
-                                <div class="team-info">
-                                    <h3>${member.name}</h3>
-                                    <p class="team-role">${member.role}</p>
-                                    <p class="team-bio">${member.bio}</p>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </section>
-                
+
                 <section class="cta-section">
                     <div class="cta-content">
                         <h2>Ready to Create Something Amazing?</h2>
